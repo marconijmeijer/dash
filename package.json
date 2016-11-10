@@ -1,0 +1,17 @@
+{
+  "name": "AppName",
+  "version": "0.0.0",
+  "private": false,
+  "author": "your-name",
+  "devDependencies": {},
+  "engines": {
+    "node": "7.0.0",
+    "npm": "3.10.8"
+  },
+  "dependencies": {
+    "express": "^4.13.3"
+  },
+  "cacheDirectories": [
+    "node_modules"
+  ]
+}
