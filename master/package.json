@@ -52,6 +52,7 @@
     "poststart": "gulp"
   },
   "dependencies": {
-    "angular-chartist.js": "^4.2.1"
+    "angular-chartist.js": "^4.2.1",
+    "gulp-protractor": "^3.0.0"
   }
 }

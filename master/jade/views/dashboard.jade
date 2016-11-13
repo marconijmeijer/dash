@@ -17,12 +17,12 @@ h3
 .row
   .col-lg-3.col-sm-6
     // START widget
-    .panel.widget.bg-primary
+    .panel.widget.bg-primary(ng-controller='customController as c')
       .row.row-table
         .col-xs-4.text-center.bg-primary-dark.pv-lg
           em.icon-cloud-upload.fa-3x
         .col-xs-8.pv-lg
-          .h2.mt0 1700
+          .h2.mt0 {{c.gaugeValue}}
           .text-uppercase Uploads
   .col-lg-3.col-sm-6
     // START widget

@@ -40,7 +40,8 @@
             'app.tables',
             'app.extras',
             'app.mailbox',
-            'app.utils'
+            'app.utils',
+            'app.custom'            
         ]);
 })();
 
@@ -193,13 +194,13 @@
     'use strict';
 
     angular
-        .module('app.settings', []);
+        .module('app.sidebar', []);
 })();
 (function() {
     'use strict';
 
     angular
-        .module('app.sidebar', []);
+        .module('app.settings', []);
 })();
 (function() {
     'use strict';
@@ -8064,79 +8065,6 @@
 })();
 
 
-(function() {
-    'use strict';
-
-    angular
-        .module('app.settings')
-        .run(settingsRun);
-
-    settingsRun.$inject = ['$rootScope', '$localStorage'];
-
-    function settingsRun($rootScope, $localStorage){
-
-
-      // User Settings
-      // -----------------------------------
-      $rootScope.user = {
-        name:     'John',
-        job:      'ng-developer',
-        picture:  'app/img/user/02.jpg'
-      };
-
-      // Hides/show user avatar on sidebar from any element
-      $rootScope.toggleUserBlock = function(){
-        $rootScope.$broadcast('toggleUserBlock');
-      };
-
-      // Global Settings
-      // -----------------------------------
-      $rootScope.app = {
-        name: 'Angle',
-        description: 'Angular Bootstrap Admin Template',
-        year: ((new Date()).getFullYear()),
-        layout: {
-          isFixed: true,
-          isCollapsed: false,
-          isBoxed: false,
-          isRTL: false,
-          horizontal: false,
-          isFloat: false,
-          asideHover: false,
-          theme: null,
-          asideScrollbar: false,
-          isCollapsedText: false
-        },
-        useFullLayout: false,
-        hiddenFooter: false,
-        offsidebarOpen: false,
-        asideToggled: false,
-        viewAnimation: 'ng-fadeInUp'
-      };
-
-      // Setup the layout mode
-      $rootScope.app.layout.horizontal = ( $rootScope.$stateParams.layout === 'app-h') ;
-
-      // Restore layout settings
-      if( angular.isDefined($localStorage.layout) )
-        $rootScope.app.layout = $localStorage.layout;
-      else
-        $localStorage.layout = $rootScope.app.layout;
-
-      $rootScope.$watch('app.layout', function () {
-        $localStorage.layout = $rootScope.app.layout;
-      }, true);
-
-      // Close submenu when sidebar change from collapsed to normal
-      $rootScope.$watch('app.layout.isCollapsed', function(newValue) {
-        if( newValue === false )
-          $rootScope.$broadcast('closeSidebarMenu');
-      });
-
-    }
-
-})();
-
 /**=========================================================
  * Module: sidebar-menu.js
  * Handle sidebar collapsible elements
@@ -8496,6 +8424,79 @@
           $scope.$on('$destroy', detach);
         }
     }
+})();
+
+(function() {
+    'use strict';
+
+    angular
+        .module('app.settings')
+        .run(settingsRun);
+
+    settingsRun.$inject = ['$rootScope', '$localStorage'];
+
+    function settingsRun($rootScope, $localStorage){
+
+
+      // User Settings
+      // -----------------------------------
+      $rootScope.user = {
+        name:     'John',
+        job:      'ng-developer',
+        picture:  'app/img/user/02.jpg'
+      };
+
+      // Hides/show user avatar on sidebar from any element
+      $rootScope.toggleUserBlock = function(){
+        $rootScope.$broadcast('toggleUserBlock');
+      };
+
+      // Global Settings
+      // -----------------------------------
+      $rootScope.app = {
+        name: 'Angle',
+        description: 'Angular Bootstrap Admin Template',
+        year: ((new Date()).getFullYear()),
+        layout: {
+          isFixed: true,
+          isCollapsed: false,
+          isBoxed: false,
+          isRTL: false,
+          horizontal: false,
+          isFloat: false,
+          asideHover: false,
+          theme: null,
+          asideScrollbar: false,
+          isCollapsedText: false
+        },
+        useFullLayout: false,
+        hiddenFooter: false,
+        offsidebarOpen: false,
+        asideToggled: false,
+        viewAnimation: 'ng-fadeInUp'
+      };
+
+      // Setup the layout mode
+      $rootScope.app.layout.horizontal = ( $rootScope.$stateParams.layout === 'app-h') ;
+
+      // Restore layout settings
+      if( angular.isDefined($localStorage.layout) )
+        $rootScope.app.layout = $localStorage.layout;
+      else
+        $localStorage.layout = $rootScope.app.layout;
+
+      $rootScope.$watch('app.layout', function () {
+        $localStorage.layout = $rootScope.app.layout;
+      }, true);
+
+      // Close submenu when sidebar change from collapsed to normal
+      $rootScope.$watch('app.layout.isCollapsed', function(newValue) {
+        if( newValue === false )
+          $rootScope.$broadcast('closeSidebarMenu');
+      });
+
+    }
+
 })();
 
 /**=========================================================
@@ -9884,14 +9885,7 @@
     'use strict';
 
     angular
-        .module('custom', [
-            // request the the entire framework
-            'angle',
-            // or just modules
-            'app.core',
-            'app.sidebar'
-            /*...*/
-        ]);
+        .module('app.custom', []);
 })();
 
 // To run this code, edit file index.html or index.jade and change
@@ -9902,13 +9896,13 @@
     'use strict';
 
     angular
-        .module('custom')
-        .controller('Controller', Controller);
+        .module('app.custom')
+        .controller('customController', customController);
 
-    Controller.$inject = ['$log'];
-    function Controller($log) {
+    customController.$inject = ['$log','webSockets'];    
+    function customController($log,webSockets) {
         // for controllerAs syntax
-        // var vm = this;
+        var vm = this;
 
 
         activate();
@@ -9916,7 +9910,88 @@
         ////////////////
 
         function activate() {
-          $log.log('I\'m a line from custom.js');
+
+            $log.log('I\'m a line from custom.js');
+            vm.gaugeValue = 0;
+
+            var items = [];
+
+            webSockets.subscribe(function (item) {
+                items.push(item);
+
+                if (items.length > 40) {
+                    items.shift();
+                }
+
+                vm.chart = {
+                    data: items,
+                    max: 30
+                };
+
+                vm.gaugeValue = item.value;
+                //$scope.$apply();
+            });        
         }
     }
+})();
+
+
+(function() {
+    'use strict';
+
+    angular
+        .module('app.custom')
+        .provider('webSockets', webSocketsProvider);
+
+
+function webSocketsProvider() {
+
+    var webSocketURL = 'ws://' + window.location.host + '/sockjs/websocket';
+    var webSocketObject; // for testing only
+
+    return {
+      $get: ["$q", function($q) {
+        if (!webSocketURL && !webSocketObject) {
+          throw 'WebSocket URL is not defined';
+        }
+
+        var socket = !webSocketObject ? new WebSocket(webSocketURL) : webSocketObject;
+
+        var deferred = $q.defer();
+
+        socket.onopen = function() {
+          deferred.resolve();
+        };
+
+        var callbacks = jQuery.Callbacks();
+
+        socket.onmessage = function(e) {
+          var data = JSON.parse(e.data);
+          callbacks.fire(data);
+        };
+
+        return {
+          send: function (message) {
+            var msg = JSON.stringify(message);
+
+            deferred.promise.then(function () {
+              socket.send(msg);
+            });
+          },
+
+          subscribe: function(callback) {
+            callbacks.add(callback);
+          }
+        };
+      }],
+
+      setWebSocketURL: function(wsURL) {
+        webSocketURL = wsURL;
+      },
+
+      setWebSocketObject: function(wsObject) {
+        webSocketObject = wsObject;
+      }
+    };
+  };
 })();

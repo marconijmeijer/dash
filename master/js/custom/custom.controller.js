@@ -7,13 +7,13 @@
     'use strict';
 
     angular
-        .module('custom')
-        .controller('Controller', Controller);
+        .module('app.custom')
+        .controller('customController', customController);
 
-    Controller.$inject = ['$log'];
-    function Controller($log) {
+    customController.$inject = ['$log','webSockets'];    
+    function customController($log,webSockets) {
         // for controllerAs syntax
-        // var vm = this;
+        var vm = this;
 
 
         activate();
@@ -21,7 +21,27 @@
         ////////////////
 
         function activate() {
-          $log.log('I\'m a line from custom.js');
+
+            $log.log('I\'m a line from custom.js');
+            vm.gaugeValue = 0;
+
+            var items = [];
+
+            webSockets.subscribe(function (item) {
+                items.push(item);
+
+                if (items.length > 40) {
+                    items.shift();
+                }
+
+                vm.chart = {
+                    data: items,
+                    max: 30
+                };
+
+                vm.gaugeValue = item.value;
+                //$scope.$apply();
+            });        
         }
     }
 })();

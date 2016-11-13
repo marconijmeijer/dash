@@ -1,20 +1,67 @@
 var express = require('express');
+var sockjs  = require('sockjs');
+var http = require('http');
+
 var app = express();
 
-// set the port of our application
-// process.env.PORT lets the port be set by Heroku
-var port = process.env.PORT || 8080;
+app.set('port', process.env.PORT || 3000);
 
-// make express look in the public directory for assets (css/js/img)
-app.use(express.static(__dirname));
+console.log('environment: ' + app.get('env'));
 
-// set the home page route
-app.get('/', function(req, res) {
+if ('production' == app.get('env')) {
+  app.use(express.static(__dirname + ''));
+} else if ('development' == app.get('env')) {
+  app.use(express.static(__dirname + ''));
+}
 
-    // make sure index is in the right directory. In this case /app/index.html
-    res.render('index');
+var clients = {};
+var clientCount = 0;
+var interval;
+
+var gaugeValue = 50;
+
+function broadcast() {
+  gaugeValue += Math.random() * 40 - 20;
+  gaugeValue = gaugeValue < 0 ? 0 : gaugeValue > 100 ? 100 : gaugeValue;
+  var time = Date.now();
+
+  var message = JSON.stringify({ value: Math.floor(gaugeValue), timestamp: time });
+
+  for (var key in clients) {
+    if(clients.hasOwnProperty(key)) {
+      clients[key].write(message);
+    }
+  }
+
+  //setTimeout(broadcast, 1000);
+}
+
+function startBroadcast () {
+  interval = setInterval(broadcast, 1000);
+  //broadcast();
+}
+
+var sockjsServer = sockjs.createServer();
+
+sockjsServer.on('connection', function(conn) {
+  clientCount++;
+  if (clientCount === 1) {
+    startBroadcast();
+  }
+
+  clients[conn.id] = conn;
+
+  conn.on('close', function() {
+    clientCount--;
+    delete clients[conn.id];
+    if (clientCount === 0) {
+      clearInterval(interval);
+    }
+  });
 });
 
-app.listen(port, function() {
-    console.log('Our app is running on http://localhost:' + port);
+var server = http.createServer(app).listen(app.get('port'), function(){
+  console.log('Express server listening on port ' + app.get('port'));
 });
+
+sockjsServer.installHandlers(server, { prefix: '/sockjs' });
